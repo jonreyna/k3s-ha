@@ -1,0 +1,9 @@
+---
+- name: add users to docker group
+  user:
+    name: "{{ item }}"
+    groups:
+      - docker
+    append: yes
+  when: dockerUsers is defined
+  loop: dockerUsers

@@ -1,0 +1,82 @@
+---
+- name: create cfssl temp directory
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0700"
+  loop:
+    - "{{ cfssl_workdir }}"
+    - "{{ cfssl_workdir_config }}"
+    - "{{ cfssl_workdir_certs }}"
+  delegate_to: localhost
+  run_once: yes
+
+- name: configure cfssl
+  template:
+    src: "{{ item }}.j2"
+    dest: "{{ cfssl_workdir_config }}/{{ item }}"
+    mode: "0600"
+  loop:
+    - config.json
+    - ca-csr.json
+    - member-csr.json
+    - client-csr.json
+  delegate_to: localhost
+  run_once: yes
+
+- name: generate ca
+  shell: |
+    "{{ cfssl_bin_dir }}/cfssl" genkey -initca "{{ cfssl_workdir_config }}/ca-csr.json" | "{{ cfssl_bin_dir }}/cfssljson" -bare ca
+  args:
+    chdir: "{{ cfssl_workdir_certs }}"
+    creates: "{{ cfssl_workdir_certs }}/ca-key.pem"
+  delegate_to: localhost
+  run_once: yes
+
+- name: generate member certificates for all nodes
+  shell: |
+    "{{ cfssl_bin_dir }}/cfssl" gencert \
+    -config="{{ cfssl_workdir_config }}/config.json" \
+    -ca="{{ cfssl_workdir_certs }}/ca.pem" \
+    -ca-key="{{ cfssl_workdir_certs }}/ca-key.pem" \
+    -profile=etcd \
+    -hostname="{{ cfssl_cluster_hosts }}" \
+    "{{ cfssl_workdir_config }}/member-csr.json" | "{{ cfssl_bin_dir }}/cfssljson" -bare member
+  args:
+    chdir: "{{ cfssl_workdir_certs }}"
+    creates: "{{ cfssl_workdir_certs }}/member-key.pem"
+  delegate_to: localhost
+
+- name: generate client certificates for all nodes
+  shell: |
+    "{{ cfssl_bin_dir }}/cfssl" gencert \
+    -config="{{ cfssl_workdir_config }}/config.json" \
+    -ca="{{ cfssl_workdir_certs }}/ca.pem" \
+    -ca-key="{{ cfssl_workdir_certs }}/ca-key.pem" \
+    -profile=etcd \
+    -hostname="{{ cfssl_cluster_hosts }}" \
+    "{{ cfssl_workdir_config }}/client-csr.json" | "{{ cfssl_bin_dir }}/cfssljson" -bare client
+  args:
+    chdir: "{{ cfssl_workdir_certs }}"
+    creates: "{{ cfssl_workdir_certs }}/client-key.pem"
+  delegate_to: localhost
+
+- name: copy certs to all nodes
+  copy:
+    src: "{{ cfssl_workdir_certs }}/{{ item }}"
+    dest: /etc/ssl/etcd/
+    mode: "0644"
+  become: yes
+  loop:
+    - ca.pem
+    - member.pem
+    - member-key.pem
+    - client.pem
+    - client-key.pem
+
+- name: cleanup local download/archive cache
+  file:
+    path: /tmp/cfssl
+    state: absent
+  delegate_to: localhost
+  run_once: yes

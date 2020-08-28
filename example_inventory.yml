@@ -1,0 +1,19 @@
+prod:
+  children:
+    k3s_managers:
+      hosts:
+        k3s0.lan:
+        k3s1.lan:
+        k3s2.lan:
+    k3s_workers:
+      hosts:
+        k3s3.lan:
+        k3s4.lan:
+        k3s5.lan:
+    k3s:
+      children:
+        k3s_managers:
+        k3s_workers:
+    etcd:
+      children:
+        k3s_managers:

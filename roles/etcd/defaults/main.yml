@@ -1,0 +1,11 @@
+---
+# https://github.com/etcd-io/etcd/releases/download/{{ release.tag }}/etcd-{{ release.tag }}-linux-amd64.tar.gz
+etcd_url: https://github.com/etcd-io/etcd/releases/download
+etcd_version: "latest"
+etcd_bin_dir: /tmp/etcd
+etcd_data_dir: /var/lib/etcd
+etcd_cert_dir: /etc/ssl/etcd
+etcd_cluster_url: "{% for host in groups.etcd %}{{ host }}=https://{{ hostvars[host].ansible_default_ipv4.address }}:2380{% if not loop.last %},{% endif %}{% endfor %}"
+etcd_cluster_hosts: "{% for host in groups.etcd %}{{ hostvars[host]['ansible_default_ipv4']['address'] }}{% if not loop.last %},{% endif %}{% endfor %}"
+etcd_method: docker
+etcd_initial_cluster_state: new

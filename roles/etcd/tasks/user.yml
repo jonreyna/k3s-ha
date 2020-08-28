@@ -1,0 +1,27 @@
+---
+- name: ensure etcd group exists
+  group:
+    name: etcd
+    system: yes
+  become: yes
+
+- name: ensure etcd user exists
+  user:
+    name: etcd
+    group: etcd
+    home: /var/lib/etcd
+    create_home: yes
+    system: yes
+  become: yes
+
+- name: create etcd directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: etcd
+    group: etcd
+    mode: "0755"
+  become: yes
+  loop:
+    - /var/lib/etcd
+    - /etc/etcd

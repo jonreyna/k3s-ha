@@ -1,0 +1,18 @@
+---
+- include_tasks: "packages-{{ ansible_distribution }}-{{ ansible_architecture }}.yml"
+- include_tasks: users.yml
+  when: dockerUsers is defined
+
+- name: daemon.json configuration file
+  copy:
+    src: daemon.json
+    dest: /etc/docker/
+    owner: root
+    group: root
+    mode: "0600"
+
+- name: start & enable docker service
+  service:
+    name: docker
+    state: started
+    enabled: yes

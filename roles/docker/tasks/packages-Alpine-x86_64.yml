@@ -1,0 +1,11 @@
+---
+- name: install docker
+  apk:
+    name: docker
+    state: present
+
+- name: start & enable docker service
+  service:
+    name: docker
+    state: started
+    enabled: yes

@@ -1,0 +1,11 @@
+---
+- name: create etcd system files
+  template:
+    src: etcd.conf.j2
+    dest: /etc/etcd.conf
+    owner: etcd
+    group: etcd
+    mode: "0644"
+  become: yes
+  notify:
+    - restart etcd

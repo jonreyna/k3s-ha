@@ -1,0 +1,35 @@
+---
+# docker exec -ti etcd etcdctl --cert-file /etc/ssl/etcd/member.pem --key-file /etc/ssl/etcd/member-key.pem --ca-file /etc/ssl/etcd/ca.pem --endpoints 'https://127.0.0.1:2379' member list
+
+- name: configure etcd docker container
+  docker_container:
+    name: etcd
+    image: quay.io/coreos/etcd:latest
+    restart_policy: always
+    # network_mode: host
+    hostname: "{{ ansible_hostname }}"
+    published_ports:
+      - 2379:2379
+      - 2380:2380
+    volumes:
+      - "{{ etcd_data_dir }}:{{ etcd_data_dir }}"
+      - "{{ etcd_cert_dir }}:{{ etcd_cert_dir }}"
+    command:
+      - etcd
+      - --data-dir="{{ etcd_data_dir }}"
+      - --name="{{ ansible_hostname }}"
+      - --listen-peer-urls="https://0.0.0.0:2380"
+      - --listen-client-urls="https://0.0.0.0:2379"
+      - --initial-advertise-peer-urls="https://{{ ansible_default_ipv4.address }}:2380"
+      - --advertise-client-urls="https://{{ ansible_default_ipv4.address }}:2379"
+      - --initial-cluster="{{ etcd_cluster_url }}"
+      - --initial-cluster-state="{{ etcd_initial_cluster_state }}"
+      - --initial-cluster-token="{{ etcd_cluster_token.stdout }}"
+      - --trusted-ca-file=/etc/ssl/etcd/ca.pem
+      - --cert-file=/etc/ssl/etcd/client.pem
+      - --key-file=/etc/ssl/etcd/client-key.pem
+      - --client-cert-auth
+      - --peer-trusted-ca-file=/etc/ssl/etcd/ca.pem
+      - --peer-cert-file=/etc/ssl/etcd/member.pem
+      - --peer-key-file=/etc/ssl/etcd/member-key.pem
+      - --peer-client-cert-auth

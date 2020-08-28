@@ -1,0 +1,5 @@
+---
+- name: install python docker support
+  pip:
+    name: docker
+    state: latest

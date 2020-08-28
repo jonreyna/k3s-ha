@@ -1,0 +1,53 @@
+---
+- name: create etcd bin directory
+  file:
+    path: "{{ etcd_bin_dir }}"
+    state: directory
+    mode: "0755"
+  delegate_to: localhost
+  run_once: yes
+
+- name: get latest release of the public repository
+  github_release:
+    user: etcd-io
+    repo: etcd
+    action: latest_release
+  register: release
+  delegate_to: localhost
+  run_once: yes
+
+- name: download etcd release tarball locally
+  get_url:
+    url: "{{ etcd_url }}/{{ release.tag }}/etcd-{{ release.tag }}-linux-amd64.tar.gz"
+    dest: "{{ etcd_bin_dir }}/etcd.tar.gz"
+    mode: "0644"
+  delegate_to: localhost
+  run_once: yes
+
+- name: extract etcd release tarball locally
+  unarchive:
+    src: "{{ etcd_bin_dir }}/etcd.tar.gz"
+    dest: "{{ etcd_bin_dir }}/"
+    extra_opts:
+      - --strip-components=1
+  delegate_to: localhost
+  run_once: yes
+
+- name: copy etcd binaries to target(s)
+  copy:
+    src: "{{ etcd_bin_dir }}/{{ item }}"
+    dest: "/usr/local/bin/{{ item }}"
+    owner: root
+    group: root
+    mode: "0755"
+  become: yes
+  loop:
+    - etcd
+    - etcdctl
+
+- name: cleanup local download/archive cache
+  file:
+    path: "{{ etcd_bin_dir }}"
+    state: absent
+  delegate_to: localhost
+  run_once: yes

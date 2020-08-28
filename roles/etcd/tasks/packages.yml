@@ -1,0 +1,8 @@
+---
+- name: install apg
+  apk:
+    name: apg
+    state: present
+  become: yes
+
+- include_tasks: "packages-{{ etcd_method }}.yml"

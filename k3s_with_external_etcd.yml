@@ -1,0 +1,30 @@
+---
+- hosts : all
+  gather_facts: no
+  roles :
+    - { role: python-minimal }
+    - { role: rng-tools }
+  tags:
+    - base
+
+- hosts : all
+  gather_facts: yes
+  roles :
+    - { role: docker }
+  tags:
+    - docker
+
+- hosts : etcd
+  gather_facts: yes
+  roles :
+    - { role: cfssl }
+    - { role: etcd }
+  tags:
+    - etcd
+
+- hosts : k3s
+  gather_facts: yes
+  roles :
+    - { role: k3s }
+  tags:
+    - k3s

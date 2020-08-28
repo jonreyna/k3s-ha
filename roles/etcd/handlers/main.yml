@@ -1,0 +1,19 @@
+---
+- name: restart etcd
+  systemd:
+    name: etcd
+    state: restarted
+    enabled: yes
+    daemon_reload: yes
+  become: yes
+  when: >
+    ansible_service_mgr == "systemd" or
+    ansible_service_mgr == "ansible"
+
+- name: restart etcd
+  service:
+    name: etcd
+    state: restarted
+    enabled: yes
+  become: yes
+  when: ansible_service_mgr == "openrc"

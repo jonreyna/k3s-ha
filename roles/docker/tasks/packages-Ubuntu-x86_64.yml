@@ -1,0 +1,20 @@
+---
+- name: add docker gpg apt key
+  apt_key:
+    keyserver: https://download.docker.com/linux/ubuntu/gpg
+    id: 9DC858229FC7DD38854AE2D88D81803C0EBFCD88
+    state: present
+
+- name: add docker-ce repo
+  apt_repository:
+    repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} edge"
+    state: present
+    filename: docker
+    update_cache: yes
+
+- name: ensure docker engine is installed/updated
+  apt:
+    name:
+      - docker-ce
+    state: latest
+    update_cache: no

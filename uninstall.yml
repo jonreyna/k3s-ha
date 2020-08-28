@@ -1,0 +1,13 @@
+---
+- hosts: all
+  gather_facts: no
+  tasks:
+  - name: stop all
+    shell: /usr/local/bin/k3s-uninstall.sh; docker stop $(docker ps -q); docker rm $(docker ps -qa);
+    ignore_errors: yes
+
+  - name: delete all
+    command: rm -rf /etc/rancher /var/lib/rancher /etc/ssl/etcd /etc/etcd /var/lib/etcd /var/log/k3s.log /var/log/pods /var/log/containers
+    args:
+      warn: false
+    ignore_errors: yes

@@ -1,0 +1,32 @@
+---
+- name: set permissions
+  file:
+    path: /etc/ssl/etcd
+    owner: etcd
+    group: etcd
+    mode: "0700"
+
+- name: create etcd bin directory
+  file:
+    path: "{{ etcd_data_dir }}"
+    state: directory
+    mode: "0755"
+
+- include_tasks: user.yml
+  when: etcd_method == "hostfs"
+
+- include_tasks: "packages.yml"
+
+- name: generate etcd cluster token
+  command: apg -n 1 -m 63 -x 63 -M LNC -a 1
+  register: etcd_cluster_token
+  run_once: true
+
+- include_tasks: docker.yml
+  when: etcd_method == "docker"
+
+- include_tasks: config.yml
+  when: etcd_method == "hostfs"
+
+- include_tasks: systemd.yml
+  when: etcd_method == "hostfs"

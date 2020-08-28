@@ -1,0 +1,68 @@
+---
+- name: download k3s setup script
+  get_url:
+    url: https://get.k3s.io
+    dest: /tmp/k3s.sh
+    mode: "0755"
+
+- name: check if k3s config directory already exists
+  stat:
+    path: /etc/rancher/k3s
+  register: etck3s
+
+- name: setup k3s
+  command: |
+    /tmp/k3s.sh \
+    --docker \
+    --datastore-endpoint "{{ etcd_cluster_url }}" \
+    --datastore-cafile /etc/ssl/etcd/ca.pem \
+    --datastore-certfile /etc/ssl/etcd/client.pem \
+    --datastore-keyfile /etc/ssl/etcd/client-key.pem
+  when: etck3s.stat.exists == False
+  delegate_to: "{{ groups['k3s_managers'][0] }}"
+  run_once: yes
+
+- name: Gather facts
+  setup:
+  tags:
+    - ha
+    - workers
+
+- name: setup k3s (managers)
+  command: |
+    /tmp/k3s.sh \
+    --docker \
+    --datastore-endpoint "{{ etcd_cluster_url }}" \
+    --datastore-cafile /etc/ssl/etcd/ca.pem \
+    --datastore-certfile /etc/ssl/etcd/client.pem \
+    --datastore-keyfile /etc/ssl/etcd/client-key.pem
+  when: inventory_hostname != groups['k3s_managers'][0] and etck3s.stat.exists == False
+  tags:
+    - ha
+
+- name: wait for token file to populate
+  wait_for:
+    path: /var/lib/rancher/k3s/server/token
+  delegate_to: "{{ groups['k3s_managers'][0] }}"
+  run_once: yes
+  tags:
+    - workers
+
+- name: get join token
+  slurp:
+    src: /var/lib/rancher/k3s/server/token
+  register: k3s_cluster_token
+  delegate_to: "{{ groups['k3s_managers'][0] }}"
+  run_once: yes
+  tags:
+    - workers
+
+- name: setup k3s (workers)
+  command: |
+    /usr/local/bin/k3s \
+    --docker \
+    --token "{{ k3s_cluster_token.content | b64decode | trim }}" \
+    --server https://{{ groups['k3s_managers'][0] }}:6443
+  when: inventory_hostname in groups['k3s_workers'] and etck3s.stat.exists == False
+  tags:
+    - workers

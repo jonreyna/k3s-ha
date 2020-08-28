@@ -1,0 +1,6 @@
+{
+  "dns":["1.1.1.1","1.0.0.1","8.8.8.8"],
+  "dns-search": ["lan"],
+  "log-driver": "json-file",
+  "log-opts": {"max-size": "100m", "max-file": "5"}
+}

@@ -1,0 +1,36 @@
+# Node Name
+name: "{{ ansible_fqdn }}"
+# Data directory
+data-dir: /var/lib/etcd/data
+# URL to communicate with other nodes
+listen-peer-urls: "https://{{ ansible_default_ipv4.address }}:2380"
+# URL to communicate with clients (etcdctl, Kubernetes)
+listen-client-urls: "https://{{ ansible_default_ipv4.address }}:2379,https://127.0.0.1:2379"
+# Notify clients to connect to this URL
+advertise-client-urls: "https://{{ ansible_default_ipv4.address }}:2379"
+# Cluster creation parameters
+# Notifies other nodes to connect to this URL
+initial-advertise-peer-urls: "https://{{ ansible_default_ipv4.address }}:2380"
+# The list of client URLs to constitute the cluster
+# TODO: See to use etcdctl added for easier management
+initial-cluster: "{{ etcd_cluster_url }}"
+# Indicates the creation of the cluster
+# TODO: Do this once at creation then switch to existing when existing is detected
+initial-cluster-state: new
+# The token to use for the creation of the cluster
+# TODO: Don't use this if the token has already been created
+initial-cluster-token: etcd-cluster-0
+
+# TLS peer
+peer-transport-security:
+  trusted-ca-file: /etc/ssl/etcd/ca.pem
+  cert-file: /etc/ssl/etcd/member.pem
+  key-file: /etc/ssl/etcd/member-key.pem
+  client-cert-auth: true
+
+# SSL client
+client-transport-security:
+  trusted-ca-file: /etc/ssl/etcd/ca.pem
+  cert-file: /etc/ssl/etcd/client.pem
+  key-file: /etc/ssl/etcd/client-key.pem
+  client-cert-auth: true
